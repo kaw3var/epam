@@ -1,10 +1,10 @@
 package vol4;
 
-import vol4.SolutionA.City;
-import vol4.SolutionA.District;
-import vol4.SolutionA.Region;
-import vol4.SolutionA.State;
-import vol4.SolutionB.*;
+import vol4.solutionA.City;
+import vol4.solutionA.District;
+import vol4.solutionA.Region;
+import vol4.solutionA.State;
+import vol4.solutionB.*;
 
 import java.util.List;
 
