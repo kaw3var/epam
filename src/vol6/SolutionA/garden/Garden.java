@@ -1,6 +1,6 @@
-package vol6.SolutionA.Garden;
+package vol6.SolutionA.garden;
 
-import vol6.SolutionA.Plant.Plant;
+import vol6.SolutionA.plant.Plant;
 
 import java.util.ArrayList;
 import java.util.List;

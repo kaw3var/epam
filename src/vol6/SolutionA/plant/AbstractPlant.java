@@ -1,4 +1,4 @@
-package vol6.SolutionA.Plant;
+package vol6.SolutionA.plant;
 
 //  Базовый класс AbstractPlant
 public abstract class AbstractPlant implements Plant {

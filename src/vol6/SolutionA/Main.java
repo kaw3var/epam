@@ -1,9 +1,9 @@
 package vol6.SolutionA;
 
-import vol6.SolutionA.Plant.FloweringPlant;
-import vol6.SolutionA.Garden.Garden;
-import vol6.SolutionA.Plant.IndoorPlant;
-import vol6.SolutionA.Plant.ShrubPlant;
+import vol6.SolutionA.plant.FloweringPlant;
+import vol6.SolutionA.garden.Garden;
+import vol6.SolutionA.plant.IndoorPlant;
+import vol6.SolutionA.plant.ShrubPlant;
 
 public class Main {
     public static void main(String[] args) {

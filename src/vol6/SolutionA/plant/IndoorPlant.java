@@ -1,4 +1,4 @@
-package vol6.SolutionA.Plant;
+package vol6.SolutionA.plant;
 
 //  Комнатное растение
 public class IndoorPlant extends AbstractPlant {

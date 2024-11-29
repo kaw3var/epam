@@ -1,4 +1,4 @@
-package vol6.SolutionA.Plant;
+package vol6.SolutionA.plant;
 
 public class ShrubPlant extends AbstractPlant {
 //    Обрезка куста
