@@ -17,9 +17,9 @@ public class StringInsert {
             return text + substring;
         }
 
-        String beforeK = text.substring(0, k + 1);
-        String afterK = text.substring(k + 1);
+        StringBuilder stringBuilder = new StringBuilder(text);
+        stringBuilder.insert(k + 1, substring);
 
-        return beforeK + substring + afterK;
+        return stringBuilder.toString();
     }
 }

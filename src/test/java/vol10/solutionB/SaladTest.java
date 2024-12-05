@@ -58,14 +58,14 @@ public class SaladTest {
     public void testSaveAndLoadSalad() {
         SaladConnector.saveSalad(salad, filename);
 
-        // Убедимся, что файл существует после сохранения
+        // Убедимся что файл существует после сохранения
         File file = new File(filename);
         assertTrue(file.exists(), "Файл не существует после сохранения");
 
         Salad loadedSalad = SaladConnector.loadSalad(filename);
         assertNotNull(loadedSalad, "Загруженный салат не должен быть null");
 
-        // Проверим, что загруженный салат имеет одинаковое количество ингредиентов
+        // Проверим что загруженный салат имеет одинаковое количество ингредиентов
         assertEquals(salad.getIngredients().size(), loadedSalad.getIngredients().size(),
                 "Количество ингредиентов в загруженном салате должно быть равно количеству в сохраненном");
 

@@ -2,11 +2,11 @@ package vol6;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import vol6.solutionA.garden.Garden;
-import vol6.solutionA.plant.FloweringPlant;
-import vol6.solutionA.plant.IndoorPlant;
-import vol6.solutionA.plant.Plant;
-import vol6.solutionA.plant.ShrubPlant;
+import vol6.garden.Garden;
+import vol6.plant.FloweringPlant;
+import vol6.plant.IndoorPlant;
+import vol6.plant.Plant;
+import vol6.plant.ShrubPlant;
 
 import java.util.List;
 

@@ -2,8 +2,10 @@ package vol10;
 
 import vol10.solutionA.WordMatcher;
 import vol10.solutionB.*;
+import vol10.solutionC.LowerToUpper;
 
 import java.io.IOException;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -28,7 +30,7 @@ public class Main {
                             .append(System.lineSeparator());
                 }
             } else {
-                output.append("No matching words found").append(System.lineSeparator());
+                output.append("Подходящие слова не найдены").append(System.lineSeparator());
             }
 
             // Запись результата в output.txt
@@ -74,5 +76,23 @@ public class Main {
 
         // vol10.solutionС
 
+        File inputFile = new File("input.java");
+
+        // Создаем новую директорию
+        File outputDir = new File("processed_files");
+        if (!outputDir.exists()) {
+            outputDir.mkdir();
+        }
+
+        // Файл для сохранения результата
+        File outputFile = new File(outputDir, "output.java");
+
+        // Обрабатываем файл
+        try {
+            LowerToUpper.processFile(inputFile, outputFile);
+            System.out.println("Обработанный файл сохранен в: " + outputFile.getAbsolutePath());
+        } catch (IOException e) {
+            System.out.println("Ошибка обработки файла: " + e.getMessage());
+        }
     }
 }
