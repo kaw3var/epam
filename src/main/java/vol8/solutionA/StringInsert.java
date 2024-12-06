@@ -1,7 +1,5 @@
 package vol8.solutionA;
 
-import java.util.Scanner;
-
 // В тексте ПОСЛЕ k-го символа вставить заданную подстроку
 
 public class StringInsert {
