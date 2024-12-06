@@ -5,12 +5,10 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-// Для запуска сервера выполнять команду в терминале java.vol14.solutionA.Server
-// Для подключения клиента к серверу выполнять команду в терминале java.vol14.solution.Client
-// Чтобы подключить несколько клиентов - запустить несколько терминалов
 public class Server {
     private static final int SERVER_PORT = 6000; // Порт сервера
     private static final List<ClientHandler> connectedClients = new CopyOnWriteArrayList<>(); // Список клиентов
+    public static volatile boolean isRunning = true;
 
     public static void main(String[] args) {
         try (ServerSocket serverSocket = new ServerSocket(SERVER_PORT)) {
@@ -20,13 +18,13 @@ public class Server {
             Thread messageSenderThread = new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 // Ожидание подключения клиентов
-                while (true) {
+                while (isRunning) {
                     if (connectedClients.isEmpty()) {
-                        System.out.println("No connected clients.");
+                        System.out.println("No connected clients");
                         try {
                             Thread.sleep(2500);
                         } catch (InterruptedException e) {
-                            System.out.println("Message sender thread interrupted. Exiting...");
+                            System.out.println("Message sender thread interrupted. Exiting..");
                             return;
                         }
                         continue;
@@ -38,9 +36,9 @@ public class Server {
                     }
 
                     // Отправка сообщения после нажатия Enter
-                    System.out.println("Press Enter to write message...");
+                    System.out.println("Press Enter to write message..");
                     String inputEnter = scanner.nextLine();
-                    if (inputEnter.isEmpty()) {
+                    if (inputEnter.isEmpty() && isRunning) {
                         try {
                             System.out.print("Enter ID of clients to send message (comma-separated): ");
                             String input = scanner.nextLine();
@@ -49,7 +47,7 @@ public class Server {
                             System.out.print("Enter a message to send: ");
                             String message = scanner.nextLine();
                             if (message.trim().isEmpty()) {
-                                System.out.println("Cannot send an empty message.");
+                                System.out.println("Cannot send an empty message");
                                 continue;
                             }
                             sendMessageToSelectedClients(message, selectedClients);
@@ -58,6 +56,7 @@ public class Server {
                         }
                     }
                 }
+                System.out.println("Message sender threat has stopped");
             });
             messageSenderThread.setDaemon(true);
             messageSenderThread.start();
@@ -66,11 +65,13 @@ public class Server {
             waitToConnectClient(serverSocket);
         } catch (IOException e) {
             System.err.println("Server error: " + e.getMessage());
+        } finally {
+            shutdown();
         }
     }
 
     private static void waitToConnectClient(ServerSocket serverSocket) throws IOException {
-        while (true) {
+        while (isRunning) {
             Socket clientSocket = serverSocket.accept();
             ClientHandler clientHandler = new ClientHandler(clientSocket);
             connectedClients.add(clientHandler);
@@ -81,6 +82,10 @@ public class Server {
 
     private static List<ClientHandler> parseClientSelection(String input) {
         List<ClientHandler> selectedClients = new ArrayList<>();
+        if (input == null || input.trim().isEmpty()) {
+            System.out.println("No client IDs provided");
+            return selectedClients;
+        }
         try {
             String[] indices = input.split(",");
             for (String index : indices) {
@@ -92,28 +97,33 @@ public class Server {
                 }
             }
         } catch (NumberFormatException e) {
-            System.out.println("Invalid input format. Please enter ID as comma-separated numbers.");
+            System.out.println("Invalid input format. Please enter ID as comma-separated numbers");
         }
         return selectedClients;
     }
 
     private static void sendMessageToSelectedClients(String message, List<ClientHandler> selectedClients) {
+        if (selectedClients.isEmpty()) {
+            System.out.println("No clients selected. Message not sent");
+            return;
+        }
         for (ClientHandler clientHandler : selectedClients) {
-            if (!clientHandler.sendMessage(message)) {
-                System.out.println("Failed to send message to " + clientHandler.getClientInfo());
-            } else {
-                System.out.println("Message to " + clientHandler.getClientInfo() + " sent successfully.");
-            }
+            boolean success  = clientHandler.sendMessage(message);
+            String status = success ? " sent successfully" : " failed to send";
+            System.out.println("Message to " + clientHandler.getClientInfo() + status);
         }
     }
 
+    // Остановка всех потоков
     public static void shutdown() {
+        isRunning = false;
         connectedClients.forEach(client -> {
             try {
                 client.socket.close();
             } catch (IOException ignored) {}
         });
         connectedClients.clear();
+        System.out.println("Server shut down");
     }
 
     // Вспомогательный класс для работы с клиентами

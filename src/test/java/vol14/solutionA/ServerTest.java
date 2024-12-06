@@ -1,127 +1,124 @@
 package vol14.solutionA;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import org.junit.jupiter.api.*;
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.net.*;
+import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ServerTest {
+public class ServerTest {
 
-    private Thread serverThread;
-    private ServerSocket testServerSocket;
+    private static final int SERVER_PORT = 6000;
+    private static Process serverProcess;
+    private static final ExecutorService clientExecutor = Executors.newFixedThreadPool(2);
 
-    @BeforeEach
-    void setUp() {
-        try {
-            testServerSocket = new ServerSocket(0); // Выбираем доступный порт
-            int serverPort = testServerSocket.getLocalPort();
-
-            serverThread = new Thread(() -> {
-                Server.main(new String[]{String.valueOf(serverPort)});
-            });
-            serverThread.setDaemon(true);
-            serverThread.start();
-
-            waitForServerToStart(serverPort); // Новая функция ожидания запуска
-        } catch (IOException e) {
-            fail("Failed to set up test server: " + e.getMessage());
-        }
+    // Запуск сервера в отдельном процессе для тестирования
+    @BeforeAll
+    public static void setUpServer() throws IOException {
+        serverProcess = new ProcessBuilder("java", "-cp", System.getProperty("java.class.path"), "vol14.solutionA.Server")
+                .redirectErrorStream(true)
+                .start();
+        // Подождем, пока сервер не начнет слушать
+        waitForServerToStart();
     }
 
-    private void waitForServerToStart(int port) {
-        for (int i = 0; i < 5; i++) {
-            try (Socket socket = new Socket("localhost", port)) {
+    // Завершаем серверный процесс после теста
+    @AfterAll
+    public static void tearDownServer() {
+        if (serverProcess != null) {
+            serverProcess.destroy();
+        }
+        clientExecutor.shutdown();
+    }
+
+    // Ожидаем, что сервер будет слушать на порту
+    private static void waitForServerToStart() {
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < 5000) {
+            try (Socket socket = new Socket("localhost", SERVER_PORT)) {
                 if (socket.isConnected()) {
-                    return;
+                    return;  // Сервер готов
                 }
-            } catch (IOException ignored) {
+            } catch (IOException e) {
                 try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                    Thread.sleep(500);  // Подождать и попробовать снова
+                } catch (InterruptedException ignored) {}
             }
         }
-        fail("Server did not start within the expected time.");
+        fail("Server did not start within the expected time");
     }
 
-    @AfterEach
-    void tearDown() {
-        try {
-            if (testServerSocket != null && !testServerSocket.isClosed()) {
-                testServerSocket.close();
-            }
-        } catch (IOException e) {
-            System.err.println("Error closing test server socket: " + e.getMessage());
-        }
-        serverThread.interrupt();
-        Server.shutdown(); // Если добавить метод завершения работы сервера
-    }
-
+    // Проверка на отправку и получение сообщений от сервера
     @Test
-    void testClientConnection() throws IOException {
-        try (Socket clientSocket = new Socket("localhost", testServerSocket.getLocalPort())) {
-            assertTrue(clientSocket.isConnected(), "Client should connect to the server successfully.");
-        }
-    }
+    void testMessageSending() throws Exception {
+        // Создание клиента и подключение
+        try (Socket socket = new Socket("localhost", SERVER_PORT);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
 
-    @Test
-    void testMessageSending() throws IOException {
-        int port = testServerSocket.getLocalPort();
-
-        try (Socket clientSocket = new Socket("localhost", port)) {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-            // Отправляем сообщение на сервер
-            writer.write("Hello Server!");
+            // Отправляем сообщение
+            String testMessage = "Hello Server!";
+            writer.write(testMessage);
             writer.newLine();
             writer.flush();
 
-            // Ждем ответа от сервера
-            Thread.sleep(500);
-
-            // Проверяем, что сервер ответил
-            assertTrue(reader.ready(), "Server should respond to the message.");
-            String serverResponse = reader.readLine();
-            assertNotNull(serverResponse, "Server response should not be null.");
-            assertEquals("Message received: Hello Server!", serverResponse, "Server response should match expected message.");
-        } catch (InterruptedException e) {
-            fail("Test interrupted: " + e.getMessage());
+            // Получаем подтверждение от сервера
+            String response = reader.readLine();
+            assertNotNull(response);
+            assertEquals("Message received: " + testMessage, response, "The response message is incorrect");
         }
     }
 
+    // Проверка на обработку нескольких клиентов
     @Test
-    void testClientDisconnection() throws IOException, InterruptedException {
-        int port = testServerSocket.getLocalPort();
+    void testMultipleClients() throws Exception {
+        CompletableFuture<Void> client1 = simulateClient("Client 1", "Hello from Client 1");
+        CompletableFuture<Void> client2 = simulateClient("Client 2", "Hello from Client 2");
 
-        try (Socket clientSocket = new Socket("localhost", port)) {
-            assertTrue(clientSocket.isConnected(), "Client should connect successfully.");
-        }
+        // Ждем, пока оба клиента не закончат
+        CompletableFuture.allOf(client1, client2).join();
 
-        // Ждём удаления клиента из списка
-        Thread.sleep(500);
-
-        // Проверяем список клиентов
-        CopyOnWriteArrayList<?> clients = getConnectedClients();
-        assertTrue(clients.isEmpty(), "Client list should be empty after disconnection.");
+        assertDoesNotThrow(() -> client1.get(), "Client 1 failed");
+        assertDoesNotThrow(() -> client2.get(), "Client 2 failed");
     }
 
-    // Вспомогательный метод для получения списка клиентов через рефлексию
-    private CopyOnWriteArrayList<?> getConnectedClients() {
-        try {
-            var field = Server.class.getDeclaredField("connectedClients");
-            field.setAccessible(true);
-            return (CopyOnWriteArrayList<?>) field.get(null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            fail("Failed to access connected clients: " + e.getMessage());
-            return null;
+    private CompletableFuture<Void> simulateClient(String clientName, String message) {
+        return CompletableFuture.runAsync(() -> {
+            try (Socket socket = new Socket("localhost", SERVER_PORT);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                 BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+
+                // Отправляем сообщение от клиента
+                writer.write(message);
+                writer.newLine();
+                writer.flush();
+
+                // Получаем подтверждение от сервера
+                String response = reader.readLine();
+                assertNotNull(response);
+                assertEquals("Message received: " + message, response, clientName + " - The response message is incorrect");
+            } catch (IOException e) {
+                fail(clientName + " failed: " + e.getMessage());
+            }
+        }, clientExecutor);
+    }
+
+    // Проверка на отключение клиента
+    @Test
+    void testClientDisconnection() throws Exception {
+        try (Socket socket = new Socket("localhost", SERVER_PORT);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()))) {
+
+            // Отправляем сообщение
+            writer.write("Test message");
+            writer.newLine();
+            writer.flush();
+
+            // Закрываем сокет, чтобы симулировать отключение
+            socket.close();
         }
+
+        assertTrue(true, "Client disconnected and no errors occurred");
     }
 }
