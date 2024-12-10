@@ -102,6 +102,18 @@ public class Main {
             System.out.println("Начальные данные успешно добавлены в базу данных.");
         } catch (SQLException e) {
             System.err.println("Ошибка при добавлении начальных данных: " + e.getMessage());
+        } finally {
+            // Закрытие подключения БД при завершении работы программы
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    if (DatabaseConnection.getConnection() != null && !DatabaseConnection.getConnection().isClosed()) {
+                        DatabaseConnection.getConnection().close();
+                        System.out.println("Соединение с базой данных закрыто.");
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Ошибка при закрытии соединения: " + e.getMessage());
+                }
+            }));
         }
     }
 }

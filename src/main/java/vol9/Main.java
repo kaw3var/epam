@@ -3,7 +3,7 @@ package vol9;
 import java.io.FileNotFoundException;
 import java.util.List;
 
-import static vol9.MyException.*;
+import static vol9.FileNumberProcess.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -27,8 +27,6 @@ public class Main {
             System.out.println("Ошибка: Недостаточно памяти для обработки данных.");
         } catch (ArithmeticException e) {
             System.out.println("Ошибка: Невозможно вычислить среднее значение для пустого списка.");
-        } catch (Exception e) {
-            System.out.println("Ошибка: " + e.getMessage());
         }
     }
 }

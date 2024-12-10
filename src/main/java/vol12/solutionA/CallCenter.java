@@ -12,7 +12,7 @@ public class CallCenter {
     public CallCenter(int numberOfOperators) {
         this.operatorsQueue = new LinkedBlockingQueue<>();
         for (int i = 1; i <= numberOfOperators; i++) {
-            operatorsQueue.offer(new Operator("Operator-" + i));
+            operatorsQueue.offer(new Operator("Оператор-" + i));
         }
     }
 
