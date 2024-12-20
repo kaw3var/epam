@@ -1,13 +1,30 @@
 package vol13.solutionA;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+
 import java.sql.Date;
 
 public class Letter {
-    private int id;
-    private int senderId;
-    private int receiverId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "sender_id", nullable = false)
+    private Integer senderId;
+
+    @Column(name = "receiver_id", nullable = false)
+    private Integer receiverId;
+
+    @Column(name = "subject", nullable = false)
     private String subject;
+
+    @Column(name = "body", nullable = false)
     private String body;
+
+    @Column(name = "sent_date", nullable = false)
     private Date sentDate;
 
     public Letter(int id, int senderId, int receiverId, String subject, String body, Date sentDate) {
